@@ -15,7 +15,7 @@ public class DownloadController {
     private static DownloadController mInstance;
     private RequestQueue mRequestQueue;
     private static Context mContext;
-    
+
     public DownloadController(Context context) {
         mContext = context;
     }
@@ -26,18 +26,18 @@ public class DownloadController {
         }
         return mInstance;
     }
-    
+
     public RequestQueue getRequestQueue() {
         if (mRequestQueue == null) {
-//            mRequestQueue = Volley.newRequestQueue(mContext.getApplicationContext());
-            Cache cache = new DiskBasedCache(mContext.getCacheDir(), 5*1024 * 1024);
-            Network network = new BasicNetwork(new HurlStack());
-            mRequestQueue = new RequestQueue(cache, network);
-            mRequestQueue.start();
+            mRequestQueue = Volley.newRequestQueue(mContext.getApplicationContext());
+//            Cache cache = new DiskBasedCache(mContext.getCacheDir(), 5*1024 * 1024);
+//            Network network = new BasicNetwork(new HurlStack());
+//            mRequestQueue = new RequestQueue(cache, network);
+//            mRequestQueue.start();
         }
         return mRequestQueue;
     }
-    
+
     public <T> void addToRequestQueue(Request<T> req) {
         getRequestQueue().add(req);
     }

@@ -7,12 +7,14 @@ public class GameItem {
     private int mSize;
     private CharSequence mIcon;
     private CharSequence mDownload;
+    private CharSequence mPackageName;
 
     static CharSequence NAME_TEST = "name-test";
     static CharSequence VERSION_TEST = "version-test";
     static int SIZE_TEST = 1024 * 1024;
     static CharSequence ICON_TEST = "icon-test";
     static CharSequence DOWNLOAD_TEST = "download-test";
+    static CharSequence PACKAGE_TEST = "packageName-test";
 
     public GameItem() {
         mName = NAME_TEST;
@@ -20,11 +22,13 @@ public class GameItem {
         mSize = SIZE_TEST;
         mIcon = ICON_TEST;
         mDownload = DOWNLOAD_TEST;
+        mPackageName = PACKAGE_TEST;
     }
 
-    public GameItem(CharSequence name, CharSequence version, int size, CharSequence icon,
-            CharSequence download) {
+    public GameItem(CharSequence name, CharSequence packageName, CharSequence version, int size,
+            CharSequence icon, CharSequence download) {
         mName = name;
+        mPackageName = packageName;
         mVersion = version;
         mSize = size;
         mIcon = icon;
@@ -37,6 +41,14 @@ public class GameItem {
 
     public void setName(CharSequence name) {
         mName = name;
+    }
+
+    public CharSequence getPackageName() {
+        return mPackageName;
+    }
+
+    public void setPackageName(CharSequence packageName) {
+        mPackageName = packageName;
     }
 
     public CharSequence getVersion() {

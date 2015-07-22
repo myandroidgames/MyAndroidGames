@@ -5,12 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.os.Bundle;
-import android.os.Handler;
 import android.app.Activity;
 import android.view.Menu;
 import android.widget.ListView;
 import android.widget.Toast;
-import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,17 +20,9 @@ import com.android.volley.toolbox.JsonObjectRequest;
 
 public class MainActivity extends Activity {
 
-    static String TAG = "myandroidgames";
-    public static String ADDRESS_BASE = "https://raw.githubusercontent.com/myandroidgames/myandroidgames.github.io/master/";
-    static String ADDRESS_JSON = "apps/com.king.candycrushsaga.json";
-
-    static String JSON_KEY_NAME = "name";
-    static String JSON_KEY_SIZE = "size";
-    static String JSON_KEY_ICON = "iconlink";
-    static String jSON_KEY_LINK = "downloadlink";
-    static String JSON_KEY_VERSION = "version";
     private ListView mListView;
     private GameListAdapter mAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,8 +31,8 @@ public class MainActivity extends Activity {
         List<GameItem> items = new ArrayList<GameItem>();
         mAdapter = new GameListAdapter(this, 0, items);
         mListView.setAdapter(mAdapter);
-        getJson(ADDRESS_BASE + ADDRESS_JSON);
-        Log.d(TAG, "onCreate..");
+        Util.createMyDir();
+        getJson(Constants.ADDRESS_BASE + Constants.ADDRESS_JSON);
     }
 
     public void getJson(String address) {
@@ -51,16 +41,18 @@ public class MainActivity extends Activity {
                     null, new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
-                            String name;
                             try {
-                                Log.d(TAG, "json:" + response.toString());
-                                name = response.getString(JSON_KEY_NAME);
-                                String icon = response.getString(JSON_KEY_ICON);
-                                int size = response.getInt(JSON_KEY_SIZE);
-                                String link = response.getString(jSON_KEY_LINK);
-                                String ver = response.getString(JSON_KEY_VERSION);
-                                mAdapter.add(new GameItem(name, ver, size, icon, link));
+                                Util.log("json:" + response.toString());
+                                String name = response.getString(Constants.JSON_KEY_NAME);
+                                String icon = response.getString(Constants.JSON_KEY_ICON);
+                                int size = response.getInt(Constants.JSON_KEY_SIZE);
+                                String link = response.getString(Constants.JSON_KEY_LINK);
+                                String ver = response.getString(Constants.JSON_KEY_VERSION);
+                                String packageName = response.getString(Constants.jSON_KEY_PACKAGE);
+                                mAdapter.add(new GameItem(name, packageName, ver, size, icon, link));
                             } catch (JSONException e) {
+                                Toast.makeText(getApplicationContext(), e.toString(),
+                                        Toast.LENGTH_SHORT).show();
                                 e.printStackTrace();
                             }
                         }
