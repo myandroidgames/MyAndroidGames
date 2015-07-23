@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,7 +33,55 @@ public class MainActivity extends Activity {
         mAdapter = new GameListAdapter(this, 0, items);
         mListView.setAdapter(mAdapter);
         Util.createMyDir();
-        getJson(Constants.ADDRESS_BASE + Constants.ADDRESS_JSON);
+        //getJson(Constants.ADDRESS_BASE + Constants.ADDRESS_JSON);
+        getIndexJson(Constants.ADDRESS_BASE + Constants.ADDRESS_INDEX_JSON);
+    }
+
+    private void getIndexJson(String address) {
+        if (networkAvailable()) {
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
+                    address, null, new Response.Listener<JSONObject>() {
+
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            Util.log(response.toString());
+                            try {
+                                JSONArray jsonArray = response
+                                        .getJSONArray(Constants.INDEX_JSON_KEY);
+                                handleGamelist(jsonArray);
+                                Util.log(jsonArray.toString());
+                            } catch (JSONException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                                Util.log(e.toString());
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError arg0) {
+                            Util.log(arg0.toString());
+                        }
+
+                    });
+            DownloadController.getInstance(this).addToRequestQueue(jsonObjectRequest);
+        } else {
+            //report network not available..
+            Toast.makeText(getApplicationContext(), "Network Not Available", Toast.LENGTH_SHORT)
+            .show();
+        }
+    }
+
+    private void handleGamelist(JSONArray array) {
+        for(int i = 0; i < array.length(); i++) {
+            try {
+                JSONObject gameEntry = array.getJSONObject(i);
+                String appJson = gameEntry.getString(Constants.INDEX_JSON_KEY_APP_JSON);
+                getJson(Constants.ADDRESS_BASE + appJson);
+            } catch (JSONException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 
     public void getJson(String address) {
@@ -48,7 +97,7 @@ public class MainActivity extends Activity {
                                 int size = response.getInt(Constants.JSON_KEY_SIZE);
                                 String link = response.getString(Constants.JSON_KEY_LINK);
                                 String ver = response.getString(Constants.JSON_KEY_VERSION);
-                                String packageName = response.getString(Constants.jSON_KEY_PACKAGE);
+                                String packageName = response.getString(Constants.JSON_KEY_PACKAGE);
                                 mAdapter.add(new GameItem(name, packageName, ver, size, icon, link));
                             } catch (JSONException e) {
                                 Toast.makeText(getApplicationContext(), e.toString(),

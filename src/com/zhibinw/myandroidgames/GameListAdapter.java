@@ -35,6 +35,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class GameListAdapter extends ArrayAdapter<GameItem> {
@@ -49,24 +50,25 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        LinearLayout view = null;
+        RelativeLayout view = null;
         if (convertView == null) {
-            view = (LinearLayout) mInflater.inflate(R.layout.game_item, null);
-            final GameItem item = this.getItem(position);
-            TextView nameTextView = (TextView) view.findViewById(R.id.name);
-            nameTextView.setText(item.getName());
-            TextView versionText = (TextView) view.findViewById(R.id.version);
-            versionText.setText(item.getVersion());
-            TextView sizeText = (TextView) view.findViewById(R.id.size);
-            sizeText.setText(Util.sizeFormat(item.getSize()));
-            ImageView iconView = (ImageView) view.findViewById(R.id.item_icon);
-            getImage(iconView, Constants.ADDRESS_BASE + item.getIcon());
-            final Button button = (Button) view.findViewById(R.id.download);
-            initialButtonStatus(button, item.getPackageName().toString(), item.getDownload()
-                    .toString());
+            view = (RelativeLayout) mInflater.inflate(R.layout.game_item, null);
         } else {
-            view = (LinearLayout) convertView;
+            view = (RelativeLayout) convertView;
         }
+        final GameItem item = this.getItem(position);
+        TextView nameTextView = (TextView) view.findViewById(R.id.name);
+        nameTextView.setText(item.getName());
+        TextView versionText = (TextView) view.findViewById(R.id.version);
+        versionText.setText(item.getVersion());
+        TextView sizeText = (TextView) view.findViewById(R.id.size);
+        sizeText.setText(Util.sizeFormat(item.getSize()));
+        ImageView iconView = (ImageView) view.findViewById(R.id.item_icon);
+        getImage(iconView, Constants.ADDRESS_BASE + item.getIcon());
+        final Button button = (Button) view.findViewById(R.id.download);
+        initialButtonStatus(button, item.getPackageName().toString(), item.getDownload()
+                .toString(), item.getVersion().toString());
+
         Util.log("getview " + position);
         return view;
     }
@@ -86,6 +88,9 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
     }
 
     private void downloadApk(final Button btn, String url, File apk) {
+        if (apk.exists()) {
+            apk.delete();
+        }
         DownloadTask mDownloadTask = new DownloadTask(mContext, btn, apk);
         mDownloadTask.execute(url);
     }
@@ -106,28 +111,58 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
         return false;
     }
 
-    private void initialButtonStatus(final Button button, final String packageName,
-            final String sDownload) {
-        if (isPackageInstalled(packageName)) {
-            button.setText("Open");
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View arg0) {
-                    PackageManager pm = mContext.getApplicationContext().getPackageManager();
-                    List<ResolveInfo> mResolveInfos = pm.queryIntentActivities(
-                            new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-                                    .setPackage(packageName), 0);
-                    if (mResolveInfos != null) {
-                        Util.log(mResolveInfos.toString());
-                    }
-                    ResolveInfo resolveInfo = mResolveInfos.get(0);
-                    Intent intent = new Intent();
-                    intent.setClassName(packageName, resolveInfo.activityInfo.name);
-                    mContext.startActivity(intent);
-                }
-            });
+    private boolean isPackageNeedUpdate(String packageName, String version) {
+        PackageManager pm = mContext.getApplicationContext().getPackageManager();
+        PackageInfo pkgInfo = null;
+        try {
+            pkgInfo = pm.getPackageInfo(packageName, 0);
+        } catch (NameNotFoundException e) {
+            Util.log("Package " + packageName + " not installed");
+            e.printStackTrace();
+        }
+        if (pkgInfo != null) {
+           return pkgInfo.versionName.compareToIgnoreCase(version) < 0;
         } else {
-            final File apkFile = new File(Constants.APP_LOCATION + "/" + packageName + ".apk");
+            Util.log("can't get pkgInfo:");
+        }
+        return false;
+    }
+
+    private void initialButtonStatus(final Button button, final String packageName,
+            final String sDownload, String version) {
+        final File apkFile = new File(Constants.APP_LOCATION + "/" + packageName + ".apk");
+        if (isPackageInstalled(packageName)) {
+            if (isPackageNeedUpdate(packageName, version)) {
+                button.setText("Update");
+                button.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View arg0) {
+                        // download file
+                        Util.log("onClick.. ");
+                        button.setText("Downloading");
+                        downloadApk(button, Constants.ADDRESS_BASE + sDownload, apkFile);
+                    }
+                });
+            } else {
+                button.setText("Open");
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View arg0) {
+                        PackageManager pm = mContext.getApplicationContext().getPackageManager();
+                        List<ResolveInfo> mResolveInfos = pm.queryIntentActivities(new Intent(
+                                Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                                .setPackage(packageName), 0);
+                        if (mResolveInfos != null) {
+                            Util.log(mResolveInfos.toString());
+                        }
+                        ResolveInfo resolveInfo = mResolveInfos.get(0);
+                        Intent intent = new Intent();
+                        intent.setClassName(packageName, resolveInfo.activityInfo.name);
+                        mContext.startActivity(intent);
+                    }
+                });
+            }
+        } else {
             if (apkFile.exists()) {
                 button.setText("Install");
                 button.setOnClickListener(new View.OnClickListener() {
@@ -139,6 +174,7 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
                     }
                 });
             } else {
+                button.setText("Download");
                 button.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View arg0) {
