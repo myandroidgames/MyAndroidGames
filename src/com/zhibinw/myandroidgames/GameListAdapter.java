@@ -15,9 +15,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -26,7 +26,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -34,9 +33,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class GameListAdapter extends ArrayAdapter<GameItem> {
     private LayoutInflater mInflater;
@@ -66,18 +65,19 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
         ImageView iconView = (ImageView) view.findViewById(R.id.item_icon);
         getImage(iconView, Constants.ADDRESS_BASE + item.getIcon());
         final Button button = (Button) view.findViewById(R.id.download);
-        initialButtonStatus(button, item.getPackageName().toString(), item.getDownload()
-                .toString(), item.getVersion().toString());
+        initialButtonStatus(button, item.getPackageName().toString(),
+                item.getDownload().toString(), item.getVersion().toString());
 
         Util.log("getview " + position);
         return view;
     }
-
+    //TODO move to other
     private void getImage(final ImageView image, String url) {
         ImageRequest request = new ImageRequest(url, new Response.Listener<Bitmap>() {
             @Override
             public void onResponse(Bitmap bitmap) {
                 image.setImageBitmap(bitmap);
+                notifyDataSetChanged();
             }
         }, 0, 0, null, new Response.ErrorListener() {
             public void onErrorResponse(VolleyError error) {
@@ -86,7 +86,7 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
         });
         DownloadController.getInstance(mContext).addToRequestQueue(request);
     }
-
+    //TODO move
     private void downloadApk(final Button btn, String url, File apk) {
         if (apk.exists()) {
             apk.delete();
@@ -94,7 +94,7 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
         DownloadTask mDownloadTask = new DownloadTask(mContext, btn, apk);
         mDownloadTask.execute(url);
     }
-
+    //ToDO move
     private boolean isPackageInstalled(String packageName) {
         PackageManager pm = mContext.getApplicationContext().getPackageManager();
         PackageInfo pkgInfo = null;
@@ -110,7 +110,7 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
         }
         return false;
     }
-
+    //TODO move
     private boolean isPackageNeedUpdate(String packageName, String version) {
         PackageManager pm = mContext.getApplicationContext().getPackageManager();
         PackageInfo pkgInfo = null;
@@ -121,13 +121,23 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
             e.printStackTrace();
         }
         if (pkgInfo != null) {
-           return pkgInfo.versionName.compareToIgnoreCase(version) < 0;
+            return pkgInfo.versionName.compareToIgnoreCase(version) < 0;
         } else {
             Util.log("can't get pkgInfo:");
         }
         return false;
     }
-
+    //TODO move
+    private boolean isPackageArchiveValid(File file) {
+        PackageManager pm = mContext.getApplicationContext().getPackageManager();
+        PackageInfo pkgInfo = null;
+        pkgInfo = pm.getPackageArchiveInfo(file.toString(), 0);
+        if (pkgInfo != null) {
+            return true;
+        }
+        return false;
+    }
+    //TODO move
     private void initialButtonStatus(final Button button, final String packageName,
             final String sDownload, String version) {
         final File apkFile = new File(Constants.APP_LOCATION + "/" + packageName + ".apk");
@@ -168,9 +178,17 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View arg0) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setDataAndType(Uri.fromFile(apkFile), Constants.TYPE_APPLICATION);
-                        mContext.startActivity(intent);
+                        if (!isPackageArchiveValid(apkFile)) {
+                            Toast.makeText(mContext.getApplicationContext(),
+                                    "apk file invalid, need redownload", Toast.LENGTH_SHORT).show();
+                            apkFile.delete();
+                            notifyDataSetChanged();
+                        } else {
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setDataAndType(Uri.fromFile(apkFile), Constants.TYPE_APPLICATION);
+                            Activity activity = (Activity) mContext;
+                            activity.startActivityForResult(intent, Constants.REQUEST_CODE_INSTALL);
+                        }
                     }
                 });
             } else {
@@ -187,7 +205,7 @@ public class GameListAdapter extends ArrayAdapter<GameItem> {
             }
         }
     }
-
+    //TODO
     private class DownloadTask extends AsyncTask<String, Integer, String> {
         private Context mContext;
         private Button mButton;

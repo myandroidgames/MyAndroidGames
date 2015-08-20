@@ -7,7 +7,7 @@ import android.os.Environment;
 public class Constants {
     public static String TAG = "myandroidgames";
     
-    public static String ADDRESS_BASE = "https://raw.githubusercontent.com/myandroidgames/myandroidgames.github.io/master/";
+    public static String ADDRESS_BASE = "http://goodgames.oss-cn-beijing.aliyuncs.com/";
     public static String ADDRESS_INDEX_JSON = "index.json";
     public static String ADDRESS_JSON = "apps/com.king.candycrushsaga.json";
 
@@ -28,4 +28,6 @@ public class Constants {
     public static String INDEX_JSON_KEY_PACKAGE_NAME = "packageName";
     public static String INDEX_JSON_KEY_VERSION = "version";
     public static String INDEX_JSON_KEY_APP_JSON = "appJson";
+    
+    public static final int REQUEST_CODE_INSTALL = 2015;
 }

@@ -13,7 +13,7 @@ public class Util {
         Log.d(Constants.TAG, msg);
     }
 
-    public static void createMyDir(){
+    public static void createAppDirIfNeed(){
         log("external is: " + Constants.EXTERNAL_PATH);
         File dirFile = Constants.APP_LOCATION;
         if(!dirFile.exists()){
@@ -33,6 +33,10 @@ public class Util {
         sBuilder.append(fsize);
         sBuilder.append(" M");
         return sBuilder.toString();
+    }
+
+    public static boolean networkAvailable() {
+        return true;
     }
 
 }

@@ -6,6 +6,7 @@ import java.util.List;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Intent;
 import android.view.Menu;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -32,13 +33,18 @@ public class MainActivity extends Activity {
         List<GameItem> items = new ArrayList<GameItem>();
         mAdapter = new GameListAdapter(this, 0, items);
         mListView.setAdapter(mAdapter);
-        Util.createMyDir();
-        //getJson(Constants.ADDRESS_BASE + Constants.ADDRESS_JSON);
         getIndexJson(Constants.ADDRESS_BASE + Constants.ADDRESS_INDEX_JSON);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //
+        mAdapter.notifyDataSetChanged();
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
     private void getIndexJson(String address) {
-        if (networkAvailable()) {
+        if (Util.networkAvailable()) {
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
                     address, null, new Response.Listener<JSONObject>() {
 
@@ -63,7 +69,7 @@ public class MainActivity extends Activity {
                         }
 
                     });
-            DownloadController.getInstance(this).addToRequestQueue(jsonObjectRequest);
+            DownloadController.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
         } else {
             //report network not available..
             Toast.makeText(getApplicationContext(), "Network Not Available", Toast.LENGTH_SHORT)
@@ -84,8 +90,14 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        DownloadController.getInstance(this.getApplicationContext()).cancelAll(null);
+        super.onDestroy();
+    }
+
     public void getJson(String address) {
-        if (networkAvailable()) {
+        if (Util.networkAvailable()) {
             JsonObjectRequest jsObjRequest = new JsonObjectRequest(Request.Method.GET, address,
                     null, new Response.Listener<JSONObject>() {
                         @Override
@@ -112,7 +124,7 @@ public class MainActivity extends Activity {
                                     Toast.LENGTH_SHORT).show();
                         }
                     });
-            DownloadController.getInstance(this).addToRequestQueue(jsObjRequest);
+            DownloadController.getInstance(this.getApplicationContext()).addToRequestQueue(jsObjRequest);
         } else {
             // report network not available...
             Toast.makeText(getApplicationContext(), "Network Not Available", Toast.LENGTH_SHORT)
@@ -126,7 +138,4 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    public static boolean networkAvailable() {
-        return true;
-    }
 }

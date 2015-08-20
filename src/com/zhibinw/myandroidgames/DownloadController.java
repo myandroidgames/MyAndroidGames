@@ -38,6 +38,10 @@ public class DownloadController {
         return mRequestQueue;
     }
 
+    public void cancelAll(Object tag) {
+        mRequestQueue.cancelAll(tag);
+    }
+
     public <T> void addToRequestQueue(Request<T> req) {
         getRequestQueue().add(req);
     }
